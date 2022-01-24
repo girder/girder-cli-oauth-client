@@ -1,4 +1,6 @@
 import json
+import logging
+import multiprocessing
 from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import urlencode
@@ -7,6 +9,11 @@ import webbrowser
 from authlib.common.security import generate_token
 from authlib.integrations.requests_client import OAuth2Session
 from xdg import BaseDirectory
+
+from girder_cli_oauth_client.redirect_handler import _find_free_port, get_token
+
+# Disable werkzeug "Running on..." log messages
+logging.getLogger("werkzeug").setLevel(logging.WARN)
 
 CODE_CHALLENGE_METHOD = 'S256'
 
@@ -60,20 +67,17 @@ class GirderCliOAuthClient:
         return self._session.create_authorization_url(
             f'{self.oauth_url}/authorize',
             code_verifier=self._code_verifier,
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
         )[0]
 
-    def _get_oauth_token(self, code: str) -> dict:
+    def _fetch_oauth_token(self, code: str, state: str) -> None:
         auth_response_kwargs = {
             'client_id': self.client_id,
-            'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob',
             'code': code,
-            # PKCE
-            'code_challenge_method': CODE_CHALLENGE_METHOD,
+            'state': state,
         }
 
         authorization_url = f'{self.oauth_url}/authorize/?{urlencode(auth_response_kwargs)}'
-        return self._session.fetch_token(
+        self._session.fetch_token(
             f'{self.oauth_url}/token/',
             authorization_response=authorization_url,
             code_verifier=self._code_verifier,
@@ -89,11 +93,28 @@ class GirderCliOAuthClient:
         return self.auth_headers
 
     def login(self) -> AuthHeaders:
+        self._port = _find_free_port()
+        # Note: setting redirect_uri directly on the session is the only easy way to make
+        # sure all requests get it.
+        self._session.redirect_uri = f'http://127.0.0.1:{self._port}'
+
+        queue = multiprocessing.Queue()
+        webserver = multiprocessing.Process(target=get_token, args=(queue, self._port))
+        webserver.start()
+
         # TODO: try catch webbrowser.Error, print the url?
-        webbrowser.open(self._get_authorization_url())
-        code = input('enter the code shown in your browser: ')
-        self._session.token = self._get_oauth_token(code)
+        auth_url = self._get_authorization_url()
+        webbrowser.open(auth_url)
+
+        resp = queue.get(block=True)
+
+        self._fetch_oauth_token(resp['code'], resp['state'])
+
         self._save()
+
+        # Note: terminating the webserver too quickly will cause the response to never be
+        # rendered.
+        webserver.terminate()
         return self.auth_headers
 
     def logout(self) -> None:

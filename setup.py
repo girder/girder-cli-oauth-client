@@ -35,6 +35,7 @@ setup(
     install_requires=[
         'authlib',
         'pyxdg',
+        'werkzeug',
     ],
     extras_require={
         'dev': [
