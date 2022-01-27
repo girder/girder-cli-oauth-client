@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Dict, Optional
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 import webbrowser
 
 from authlib.common.security import generate_token
@@ -15,12 +15,9 @@ AuthHeaders = Dict
 
 
 class GirderCliOAuthClient:
-    def __init__(
-        self, oauth_url: str, client_id: str, package_name: str, scope: Optional[str] = None
-    ) -> None:
+    def __init__(self, oauth_url: str, client_id: str, scope: Optional[str] = None) -> None:
         self.oauth_url = oauth_url.rstrip('/')
         self.client_id = client_id
-        self.package_name = package_name
         self.scope = scope
         self._session = OAuth2Session(
             self.client_id, code_challenge_method=CODE_CHALLENGE_METHOD, scope=scope
@@ -28,7 +25,10 @@ class GirderCliOAuthClient:
 
     @property
     def _data_path(self) -> Path:
-        return Path(BaseDirectory.save_data_path(self.package_name))
+        hostname = urlparse(self.oauth_url).hostname
+        assert hostname
+        namespace = Path('girder_cli_oauth_client') / Path(hostname) / Path(self.client_id)
+        return Path(BaseDirectory.save_data_path(namespace))
 
     @property
     def _token_path(self) -> Path:
@@ -52,7 +52,10 @@ class GirderCliOAuthClient:
     @property
     def auth_headers(self) -> Optional[AuthHeaders]:
         if self._session.token:
-            return {'Authorization': f'Bearer {self._session.token["access_token"]}'}
+            auth_value = (
+                f'{self._session.token["token_type"]} {self._session.token["access_token"]}'
+            )
+            return {'Authorization': auth_value}
 
     def _get_authorization_url(self) -> str:
         self._code_verifier = generate_token(128)
