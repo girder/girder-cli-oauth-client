@@ -15,12 +15,12 @@ AuthHeaders = Dict
 
 
 class GirderCliOAuthClient:
-    def __init__(self, oauth_url: str, client_id: str, scope: Optional[str] = None) -> None:
+    def __init__(self, oauth_url: str, client_id: str, scopes: Optional[list[str]] = None) -> None:
         self.oauth_url = oauth_url.rstrip('/')
         self.client_id = client_id
-        self.scope = scope
+        self._scopes = [] if not scopes else scopes
         self._session = OAuth2Session(
-            self.client_id, code_challenge_method=CODE_CHALLENGE_METHOD, scope=scope
+            self.client_id, code_challenge_method=CODE_CHALLENGE_METHOD, scope=self.scope
         )
 
     @property
@@ -33,6 +33,10 @@ class GirderCliOAuthClient:
     @property
     def _token_path(self) -> Path:
         return self._data_path / 'token.json'
+
+    @property
+    def scope(self) -> str:
+        return ' '.join(self._scopes)
 
     def _load(self) -> None:
         if self._token_path.exists():

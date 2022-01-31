@@ -10,6 +10,7 @@ def cli(ctx):
     ctx.obj['client'] = GirderCliOAuthClient(
         'http://127.0.0.1:8000/oauth',
         'BqGiENNBN0cB0gSP5FcWUj5KHUP9NQswcHLXKvCX',
+        ['identity'],
     )
 
     ctx.obj['auth_headers'] = ctx.obj['client'].maybe_restore_login()
