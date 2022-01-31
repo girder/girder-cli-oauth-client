@@ -12,11 +12,15 @@ else:
 
 setup(
     name='girder-cli-oauth-client',
-    version='0.1.0',
-    description='',
+    description='A Python library for performing OAuth login to a Girder 4 (Django) server.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     license='Apache 2.0',
+    url='https://github.com/girder/girder-cli-oauth-client',
+    project_urls={
+        'Bug Reports': 'https://github.com/girder/girder-cli-oauth-client/issues',
+        'Source': 'https://github.com/girder/girder-cli-oauth-client',
+    },
     author='Kitware, Inc.',
     author_email='kitware@kitware.com',
     keywords='',
@@ -30,8 +34,6 @@ setup(
         'Programming Language :: Python',
     ],
     python_requires='>=3.8',
-    packages=find_packages(),
-    include_package_data=True,
     install_requires=[
         'authlib',
         'pyxdg',
@@ -45,4 +47,5 @@ setup(
             'requests',
         ]
     },
+    packages=find_packages(),
 )
