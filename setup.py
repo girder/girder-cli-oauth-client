@@ -3,12 +3,8 @@ from pathlib import Path
 from setuptools import find_packages, setup
 
 readme_file = Path(__file__).parent / 'README.md'
-if readme_file.exists():
-    with readme_file.open() as f:
-        long_description = f.read()
-else:
-    # When this is first installed in development Docker, README.md is not available
-    long_description = ''
+with readme_file.open() as f:
+    long_description = f.read()
 
 setup(
     name='girder-cli-oauth-client',

@@ -19,7 +19,6 @@ using the OAuth2.0 Authorization Code Grant with PKCE flow and out-of-band redir
   oauth_client = GirderCliOAuthClient(
       'http://localhost:8000/oauth/',
       '1ohsuyWIx9fEsJhmAH2AWGNUqd8Wsd7LHyongtVy',
-      'my_oauth_application',
   )
   ```
 
