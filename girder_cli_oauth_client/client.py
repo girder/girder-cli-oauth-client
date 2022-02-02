@@ -94,6 +94,15 @@ class GirderCliOAuthClient:
             if self._session.token.is_expired():
                 self._session.refresh_token(f'{self.oauth_url}/token/')
                 self._save()
+
+            if set(self._session.token['scope'].split()) < set(self._scopes):
+                # One or more requested scopes aren't provided in the existing token. This is really
+                # common when developing and modifying the scopes parameter. This invalidates
+                # the cached token, so log the user out so a new login flow begins.
+                # Use an inequality comparison, as sometimes the scopes returned are different from
+                # the scopes requested; usually though, this is the server returning more scopes.
+                self.logout()
+
         return self.auth_headers
 
     def login(self) -> AuthHeaders:
