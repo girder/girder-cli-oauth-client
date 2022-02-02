@@ -95,10 +95,11 @@ class GirderCliOAuthClient:
                 self._save()
 
             if set(self._session.token['scope'].split()) < set(self._scopes):
-                # 1 or more requested scopes aren't provided in the token. This is really common
-                # when developing and modifying the scopes parameter. Log the user out so a
-                # new login flow begins. Note sometimes the scopes returned are different from the
-                # scopes requested, usually though, this is the server returning more scopes.
+                # One or more requested scopes aren't provided in the existing token. This is really
+                # common when developing and modifying the scopes parameter. This invalidates
+                # the cached token, so log the user out so a new login flow begins.
+                # Use an inequality comparison, as sometimes the scopes returned are different from
+                # the scopes requested; usually though, this is the server returning more scopes.
                 self.logout()
 
         return self.auth_headers
