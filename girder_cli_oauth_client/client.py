@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import urlencode, urlparse
@@ -96,8 +97,13 @@ class GirderCliOAuthClient:
         return self.auth_headers
 
     def login(self) -> AuthHeaders:
-        # TODO: try catch webbrowser.Error, print the url?
-        webbrowser.open(self._get_authorization_url())
+        auth_url = self._get_authorization_url()
+        if os.environ.get('DISPLAY'):
+            webbrowser.open(auth_url)
+        else:
+            print('visit the following url in a browser:')
+            print(auth_url)
+
         code = input('enter the code shown in your browser: ')
         self._session.token = self._get_oauth_token(code)
         self._save()
